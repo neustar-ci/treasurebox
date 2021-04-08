@@ -1,0 +1,16 @@
+# Make sure Custom Python Scripts can be run on your TreasureData environment
+# https://docs.treasuredata.com/display/public/PD/Introduction+to+Custom+Scripts
+
++run_nsr_integration_script:
+  py>: scripts.batch_ciapi.main
+  _env:
+      TD_API_KEY: ${secret:td.apikey}
+      TD_API_SERVER: "https://api.treasuredata.com/"
+      NSR_SERVICE_ID: ${secret:NSR_SERVICE_ID}
+      NSR_USR: ${secret:NSR_USR}
+      NSR_PWD: ${secret:NSR_PWD}
+      PROFILES_DATABASE: "cdp_audience_172108"
+      PROFILES_TABLE: "customers"
+      ENRICHED_PROFILES_TABLE: "nsr_enriched"
+  docker:
+     image: "digdag/digdag-python:3.7"
