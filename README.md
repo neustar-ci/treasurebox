@@ -18,6 +18,7 @@ The following guide demonstrates the integration of a Treasure Data workflow wit
 
 ## Getting Started
 
+0) A client user would have run the **[Master Segment](https://docs.treasuredata.com/display/public/PD/Overview+of+Master+Segments)** process in Treasure Data so that customer profiles are availabe.
 1) Contact Neustar CI API (<ciapi@team.neustar>) team to get your credentials. A **Service ID (or SID)**, **Username** and **Password** will be provided.
 2) Ensure that your Treasure Data environment is configured to allow running custom **[python scripts](https://docs.treasuredata.com/display/public/PD/Introduction+to+Custom+Scripts)**.
 3) Install the **[Treasure Data Toolbelt](https://toolbelt.treasuredata.com/)** on your local machine (supports MacOS, Linux & Windows). Once installed, login into your Treaure Data environment remotely by running `td account`.
