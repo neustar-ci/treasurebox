@@ -29,7 +29,7 @@ td account
 ## Steps
 1) Download the Treasure Box by cloning this repository to your local machine and then `cd` into it.
 ```
-git@github.com:neustar-ci/treasurebox.git
+git clone git@github.com:neustar-ci/treasurebox.git
 cd nsr_tb
 ```
 2) Upload this Treasure Box to your Treasure Data environment by using the Toolbelt. If you are performing this operation for the first time, the Toolbel will require you to install the `workflow` module.
