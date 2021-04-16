@@ -1,6 +1,6 @@
 # Neustar Customer Identity (CI-API) Integration
 
-A Treasure Box that can be used by a Treasure Data customer to enrich their first-party using  Neustar's CI API.
+A Treasure Box that can be used by a Treasure Data customer to enrich their first-party data using  Neustar's CI API.
 
 ## Integration Overview
 
