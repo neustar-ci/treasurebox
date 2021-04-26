@@ -4,7 +4,7 @@
 +run_nsr_integration_script:
   py>: scripts.batch_ciapi.main
   _env:
-      TD_API_KEY: ${secret:td.apikey}
+      TD_API_KEY: ${secret:TD_API_KEY}
       TD_API_SERVER: "https://api.treasuredata.com/"
       NSR_SERVICE_ID: ${secret:NSR_SERVICE_ID}
       NSR_USR: ${secret:NSR_USR}
