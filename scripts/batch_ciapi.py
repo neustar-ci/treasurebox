@@ -4,8 +4,9 @@ import os
 from os import system
 from os import environ
 
-# upgrade pandas first
+# upgrade pandas and pytd client
 os.system(f"{sys.executable} -m pip install -U pandas==1.0.3")
+os.system(f"{sys.executable} -m pip install -U pytd==1.0.0")
 import pandas as pd
 print(pd.__version__)
 from pandas.io.json import json_normalize
@@ -40,7 +41,7 @@ def main():
     enriched_data = pd.DataFrame(columns=['cdp_customer_id','ekey', 'hhid', 'firstNameMatch', 'middleNameMatch', 'lastNameMatch',
        'phoneMatches', 'emailMatches', 'phoneLinkageScores',
        'emailLinkageScores', 'dobMatch', 'gender', 'genderMatch', 'age',
-       'ageConfidence', 'deceased', 'emails', 'addresses', 'name.first',
+       'ageConfidence', 'emails', 'addresses', 'name.first',
        'name.middle', 'name.last'])
     
     for row in cdp_record['data']:
@@ -48,6 +49,8 @@ def main():
         df = json_normalize(data=result['6544'], record_path=['individuals'])
         #prepend the cdp_customer_id to the NSR data for easy profile deduplication later
         df.insert(0,'cdp_customer_id', row[0])
+        # drop sensitive fields {client may drop more based upon their need}
+        df.drop(columns = ['deceased'])
         enriched_data = enriched_data.append(df)
 
     
@@ -64,7 +67,7 @@ def get_profiles_pii_in_td (client, profiles_tbl):
     return profiles
 
 def resolve_identity_from_neustar (usr, pwd, sid, firstname, lastname, middleinitial, email, phone):
-    url = "https://webgwy.neustar.biz/v2/access/query?elems=6544&1601=Email=3,Individual,Name,Household,Address&serviceid={0}&1={1}&572={2}&1395={3},{4},{5}".format(sid, phone, email, firstname, lastname, middleinitial)
+    url = "https://webgwy.neustar.biz/v2/access/query?elems=6544&serviceid={0}&1={1}&572={2}&1395={3},{4},{5}".format(sid, phone, email, firstname, lastname, middleinitial)
     payload = ""
     headers = {
         'Content-Type': 'application/json',
