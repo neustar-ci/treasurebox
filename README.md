@@ -18,8 +18,8 @@ The following guide demonstrates the integration of a Treasure Data workflow wit
 
 ## Getting Started
 
-0) A client user would have run the **[Master Segment](https://docs.treasuredata.com/display/public/PD/Overview+of+Master+Segments)** process in Treasure Data so that customer profiles are availabe.
-1) Contact Neustar CI API (<ciapi@team.neustar>) team to get your credentials. A **Service ID (or SID)**, **Username** and **Password** will be provided.
+0) A client user should have run the **[Master Segment](https://docs.treasuredata.com/display/public/PD/Overview+of+Master+Segments)** process in Treasure Data so that customer profiles are availabe.
+1) Contact Neustar Sales (<solutions@team.neustar>) team to get your credentials. A **Service ID (or SID)**, **Username** and **Password** will be provided.
 2) Ensure that your Treasure Data environment is configured to allow running custom **[python scripts](https://docs.treasuredata.com/display/public/PD/Introduction+to+Custom+Scripts)**.
 3) Install the **[Treasure Data Toolbelt](https://toolbelt.treasuredata.com/)** on your local machine (supports MacOS, Linux & Windows). Once installed, login into your Treaure Data environment remotely by running `td account`.
 ```
@@ -47,10 +47,11 @@ td wf push neustar_ciapi_integration
     <img alt="plus icon" width="65%" height="65%" src="img/add_secret.png">.
 </div>
 
-5) In the modal dialog window that opens enter each of the 3 secrets as shown below.
+5) In the modal dialog window that opens enter each of the 4 secrets as shown below.
     - NSR_SERVICE_ID
     - NSR_USR
     - NSR_PWD
+    - TD_API_KEY
 <div align="center">
     <img alt="Add Secret" width="65%" height="65%" src="img/add_secret_key.png">
 </div>
@@ -74,4 +75,4 @@ Once the changes are made, click on **Save And Commit** as shown below.
 </div>
 
 ## Support
-For any queries around the Treasure Box, contact <divaritosh.singh@team.neustar>.
+For any queries around the Treasure Box, contact <support@team.neustar> with the subject line **Neustar TreasureBox**.
