@@ -8,8 +8,7 @@ from os import environ
 os.system(f"{sys.executable} -m pip install -U pandas==1.0.3")
 os.system(f"{sys.executable} -m pip install -U pytd==1.0.0")
 import pandas as pd
-print(pd.__version__)
-from pandas.io.json import json_normalize
+
 import pytd
 import pytd.pandas_td as td
 import json
@@ -49,24 +48,67 @@ def main():
     # initialise client and con
     con = td.connect(apikey=TD_API_KEY, endpoint=TD_API_SERVER)
     client = pytd.Client(apikey=TD_API_KEY, endpoint=TD_API_SERVER, database=PROFILES_DATABASE)
+    # now get all profiles for enrichment
     cdp_record = get_profiles_pii_in_td(client, PROFILES_TABLE, src_schema)
     
     # initialise empty df
-    enriched_data = pd.DataFrame(columns=['cdp_customer_id','ekey', 'hhid', 'firstNameMatch', 'middleNameMatch', 'lastNameMatch',
-       'phoneMatches', 'emailMatches', 'phoneLinkageScores',
-       'emailLinkageScores', 'dobMatch', 'gender', 'genderMatch', 'age',
-       'ageConfidence', 'emails', 'addresses', 'name.first',
-       'name.middle', 'name.last'])
+    enriched_data = pd.DataFrame(columns=['cdp_customer_id','ekey', 'hhid', 'firstNameMatch', 'lastNameMatch', 'addressMatches',
+       'emailMatches', 'addressLinkageScores', 'emailLinkageScores',
+       'dobMatch', 'gender', 'genderMatch', 'age', 'ageConfidence',
+       'phones', 'emails', 'addresses', 'name.first', 'name.middle',
+       'name.last', 'household.hhid', 'household.MatchType',
+       'household.NumberOfPersonsInLivingUnit',
+       'household.NumberOfChildrenInLivingUnit',
+       'household.NumberOfAdultsInLivingUnit',
+       'household.Children_PresenceOfChild_0_18', 'household.Children_Age_0_3',
+       'household.Children_Age_0_3_Score', 'household.Children_Age_0_3_Gender',
+       'household.Children_Age_4_6', 'household.Children_Age_4_6_Score',
+       'household.Children_Age_4_6_Gender', 'household.Children_Age_7_9',
+       'household.Children_Age_7_9_Score', 'household.Children_Age_7_9_Gender',
+       'household.Children_Age_10_12', 'household.Children_Age_10_12_Score',
+       'household.Children_Age_10_12_Gender', 'household.Children_Age_13_15',
+       'household.Children_Age_13_15_Score',
+       'household.Children_Age_13_15_Gender', 'household.Children_Age_16_18',
+       'household.Children_Age_16_18_Score',
+       'household.Children_Age_16_18_Gender',
+       'household.Estimated_Household_Income_Narrow',
+       'household.Estimated_Household_Income_Wide',
+       'household.Property_Realty_Property_Indicator',
+       'household.Property_Realty_Home_Land_Value',
+       'household.Estimated_Current_Home_Value',
+       'household.Property_Realty_Home_Total_Value',
+       'household.Property_Realty_Home_Median_Value',
+       'household.Dwelling_Unit_Size', 'household.Dwelling_Type',
+       'household.Homeowner_Combined_Homeowner_Renter',
+       'household.Property_Realty_Year_Built_Confidence',
+       'household.Property_Realty_Year_Built', 'household.Length_Of_Residence',
+       'household.Presence_Of_Credit_Card',
+       'household.Presence_Of_Premium_Credit_Card', 'household.Mail_Responder',
+       'household.Home_Business', 'household.Activity_Date',
+       'household.Census_2010_State_And_County',
+       'household.Census_2010_Tract_And_Block_Group',
+       'household.Core_Based_Statistical_Areas_CBSA',
+       'household.Core_Based_Statistical_Area_Type',
+       'household.Census_Rural_Urban_County_Size_Code',
+       'household.Median_Family_Household_Income',
+       'household.Household_Composition', 'household.E1_Segment',
+       'household.E1_Segment_Match_Flag', 'household.Buying_Power_Score',
+       'household.Credit_Flag', 'household.Net_Asset_Value'])
     
     for row in cdp_record['data']:
-        result = resolve_identity_from_neustar(NSR_USR, NSR_PWD, NSR_SERVICE_ID, row[1], row[2], row[3], row[4], row[5])
-        df = json_normalize(data=result['6544'], record_path=['individuals'])
-        #prepend the cdp_customer_id to the NSR data for easy profile deduplication later
-        df.insert(0,'cdp_customer_id', row[0])
-        # drop sensitive fields as below {client may drop based upon their need}
-        # df.drop(columns = ['deceased'])
-        enriched_data = enriched_data.append(df)
-
+        result = resolve_identity_from_neustar(NSR_USR, NSR_PWD, NSR_SERVICE_ID, row[1], row[2], row[3] , row[4], row[5], row[6], row[7], row[8], row[9], row[10]) # change row indexes based on customer schema
+        try:
+          d=json.loads(result)['response'][0]
+          df1 = pd.json_normalize(data=d['6544'], record_path=['individuals'])
+          df2 = pd.json_normalize(data=d['6544'])
+          df = df1.join(df2)
+          #prepend the src_external_id to the NSR data for easy profile deduplication later
+          df.insert(0,'cdp_customer_id', row[0])
+          # drop duplicate or sensitive fields as below {client may drop more based upon their need}
+          df.drop(columns = ['deceased','individuals'])
+          enriched_data = enriched_data.append(df)
+        except:
+          pass
     
     # finally write data into new table in TD
     load_data_into_td(con, enriched_data, PROFILES_DATABASE, ENRICHED_PROFILES_TABLE)
@@ -81,24 +123,25 @@ def xstr(s):
 # customise for client specific schema
 def get_profiles_pii_in_td (client, profiles_tbl, schema):
     sql = """SELECT {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}
-    FROM {0} WHERE email is not null OR phone1 IS NOT NULL""".format(profiles_tbl, schema['EXTERNAL_ID'], schema['FNAME_COL'], schema['LNAME_COL'], schema['MNAME_COL'], schema['EMAIL_COL'], schema['PHONE_COL'], schema['ADDR1_COL'], schema['ADDR2_COL'], schema['CITY_COL'], schema['STATE_COL'], schema['ZIP_COL'] )
+    FROM {0} WHERE {4} IS NOT NULL or {2} IS NOT NULL""".format(profiles_tbl, schema['EXTERNAL_ID'], schema['FNAME_COL'], schema['LNAME_COL'], schema['MNAME_COL'], schema['PHONE_COL'],schema['EMAIL_COL'], schema['ADDR1_COL'], schema['ADDR2_COL'], schema['CITY_COL'], schema['STATE_COL'], schema['ZIP_COL'] )
+    #log generated sql , modify if necessary
+    print(sql)
     profiles = client.query(query = sql)
     return profiles
 
 def resolve_identity_from_neustar (usr, pwd, sid, firstname, lastname, middleinitial, email, phone, address1, address2, city, state, zip):
     # create full address from address lines
-    address = xstr(address1) + " " + xstr(address2)
-    url = "https://webgwy.neustar.biz/v2/access/query?elems=6544&1601=Email=3,Individual,Name,Household,Address&serviceid={0}&1={1}&572={2}&1395={3},{4},{5}&1390={6}&1391={7}&1392={8}&1393={9}".format(sid, phone, email, firstname, lastname, middleinitial, address, city, state, zip)
+    address = xstr(address1) + ", " + xstr(address2)
+    url = "https://webgwy.neustar.biz/v2/access/query?elems=6544&1601=Email=3,Individual,Name,Household,Address,Phone&serviceid={0}&1={1}&572={2}&1395={3},{4},{5}&1390={6}&1391={7}&1392={8}&1393={9}".format(sid, xstr(phone), xstr(email), xstr(firstname), xstr(lastname), xstr(middleinitial), xstr(address), xstr(city), xstr(state), xstr(zip))
     payload = ""
     headers = {
         'Content-Type': 'application/json',
         'X-Accept': 'json'
         }
-    print("URL:" + url) 
+    print(url)    
     response = requests.request("GET", url, headers=headers, data=payload, auth=(usr, pwd))
-    try:
-        string_to_return = json.loads(response.text)['response'][0]
-    return  #LATER : this will become a list for batch queries to the CIAPI
+    print(response.text)
+    return response.text #LATER : this will become a list for batch queries to the CIAPI
 
 # use pandas dataframe method to load table
 # consider using incremental data loads for heavier volumes
