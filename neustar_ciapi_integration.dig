@@ -1,6 +1,7 @@
 # Make sure Custom Python Scripts can be run on your TreasureData environment
 # https://docs.treasuredata.com/display/public/PD/Introduction+to+Custom+Scripts
-
+schedule:
+  minutes_interval>: 15
 +run_nsr_integration_script:
   py>: scripts.batch_ciapi.main
   _env:
